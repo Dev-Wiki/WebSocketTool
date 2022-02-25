@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 using System.Windows;
 using log4net;
 using log4net.Config;
+using WebSocketTool.Util;
+using LogManager = WebSocketTool.Util.LogManager;
 
 namespace WebSocketTool
 {
@@ -16,20 +18,21 @@ namespace WebSocketTool
     /// </summary>
     public partial class App : Application
     {
-        public static readonly ILog Log = LogManager.GetLogger(nameof(App));
-
+        private static Log log;
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
+            LogManager.GetManager().Init("WebSocketTool");
             XmlConfigurator.ConfigureAndWatch(new FileInfo("log4net.config"));
             Directory.CreateDirectory("log");
+            log = LogManager.GetManager().GetLog(nameof(App));
         }
 
         public static void RunOnUIThread(Action action)
         {
             if (Current == null)
             {
-                Log.Info("application current is null");
+                log.Info("application current is null");
                 return;
             }
             if (Current.CheckAccess())

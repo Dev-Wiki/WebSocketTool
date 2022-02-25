@@ -67,6 +67,9 @@
       <DependentUpon>ClientWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Properties\Annotations.cs" />
+    <Compile Include="Util\Log.cs" />
+    <Compile Include="Util\NetUtil.cs" />
+    <Compile Include="Util\TimeUtil.cs" />
     <Compile Include="View\Dialog\Toast.xaml.cs">
       <DependentUpon>Toast.xaml</DependentUpon>
     </Compile>
