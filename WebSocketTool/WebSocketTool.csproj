@@ -34,17 +34,6 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <ItemGroup Condition=" '$(Configuration)' == 'Debug' ">
-    <ProjectReference Include="..\..\websocket-sharp\websocket-sharp\websocket-sharp.csproj">
-      <Project>{b357bac7-529e-4d81-a0d2-71041b19c8de}</Project>
-      <Name>websocket-sharp</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup Condition=" '$(Configuration)' == 'Release' ">
-    <Reference Include="websocket-sharp">
-      <HintPath>..\libs\websocket-sharp.dll</HintPath>
-    </Reference>
-  </ItemGroup>
   <ItemGroup>
     <Reference Include="log4net">
       <HintPath>..\libs\log4net.dll</HintPath>
@@ -132,6 +121,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\websocket-sharp\websocket-sharp.csproj">
+      <Project>{b357bac7-529e-4d81-a0d2-71041b19c8de}</Project>
+      <Name>websocket-sharp</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
