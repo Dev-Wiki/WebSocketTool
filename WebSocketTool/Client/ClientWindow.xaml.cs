@@ -22,7 +22,7 @@ namespace WebSocketTool.Client
     public partial class ClientWindow : Window, IClientView
     {
         private static readonly ILog Log = LogManager.GetLogger(nameof(ClientWindow));
-        private ClientViewModel viewModel;
+        private readonly ClientViewModel viewModel;
         public ClientWindow()
         {
             InitializeComponent();

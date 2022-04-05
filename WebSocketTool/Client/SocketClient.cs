@@ -10,7 +10,7 @@ namespace WebSocketTool.Client
     public class SocketClient
     {
         private static readonly ILog Log = LogManager.GetLogger(nameof(SocketClient));
-        private WebSocket mSocket;
+        private readonly WebSocket mSocket;
         public event EventHandler<MessageEventArgs> MessageEvent;
         public event EventHandler<ErrorEventArgs> ErrorEvent;
         public event EventHandler<EventArgs> OpenEvent;
@@ -20,7 +20,10 @@ namespace WebSocketTool.Client
         {
             Log.Info($"create socket:{url}");
             mSocket = new WebSocket(url);
-            mSocket.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12;
+            if (url.StartsWith("wss"))
+            {
+                mSocket.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12;
+            }
             mSocket.OnOpen += OnOpen;
             mSocket.OnClose += OnClose;
             mSocket.OnError += OnError;

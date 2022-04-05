@@ -6,6 +6,7 @@
         xmlns:local="clr-namespace:WebSocketTool.Client"
         mc:Ignorable="d" WindowStartupLocation="CenterScreen"
         Closed="ClientWindow_OnClosed"
+        d:DataContext="{d:DesignInstance d:Type=local:ClientViewModel}"
         Title="ClientWindow" Height="450" Width="800">
     <Grid Margin="5">
         <Grid.RowDefinitions>
@@ -40,7 +41,7 @@
                     <RowDefinition Height="36"/>
                 </Grid.RowDefinitions>
                 <TextBlock Text="&lt;---------------------" VerticalAlignment="Center"/>
-                <Button x:Name="SendContentBtn" Width="80" Height="32" Content="发送" Click="SendContentBtn_OnClick" 
+                <Button Grid.Row="0" x:Name="SendContentBtn" Width="80" Height="32" Content="发送" Click="SendContentBtn_OnClick" 
                     HorizontalAlignment="Right" Cursor="Hand" IsEnabled="{Binding IsCloseEnable, Mode=OneWay}"/>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Grid.Row="1" HorizontalAlignment="Left">
                     <TextBlock Text="时间间隔:"></TextBlock>

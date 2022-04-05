@@ -1,15 +1,17 @@
 ﻿using System;
-using System.Windows.Threading;
+using System.Timers;
 using log4net;
 using WebSocketSharp;
 using WebSocketTool.Base;
+using WebSocketTool.Util;
+using LogManager = log4net.LogManager;
 
 namespace WebSocketTool.Client
 {
     public class ClientViewModel : BaseViewModel
     {
         private static readonly ILog Log = LogManager.GetLogger(nameof(ClientViewModel));
-        private IClientView view;
+        private readonly IClientView view;
         private SocketClient mClient;
 
         public ClientViewModel(IClientView view)
@@ -54,7 +56,7 @@ namespace WebSocketTool.Client
         {
             if (string.IsNullOrEmpty(WsUrl))
             {
-                view.AppendInfo("请输入正确的WebSocket地址");
+                view.AppendInfo($"Hint {TimeUtil.GetCurrentDateTime()} \n 请输入正确的WebSocket地址");
                 return;
             }
 
@@ -65,17 +67,17 @@ namespace WebSocketTool.Client
 
             if (mClient.IsAlive())
             {
-                view.AppendInfo("WebSocket已连接,请先断开上次连接");
+                view.AppendInfo($"Hint {TimeUtil.GetCurrentDateTime()} \n WebSocket已连接,请先断开上次连接");
                 return;
             }
 
-            view.AppendInfo($"<=== start connect");
+            view.AppendInfo($"Hint {TimeUtil.GetCurrentDateTime()} \n Start Connect Socket");
             mClient.ConnectAsync();
         }
 
         public void Send()
         {
-            view.AppendInfo($"<=== socket send:{SendContent}");
+            view.AppendInfo($"You {TimeUtil.GetCurrentDateTime()} \n {SendContent}");
             mClient.Send(SendContent);
         }
 
@@ -127,11 +129,11 @@ namespace WebSocketTool.Client
 
         public void Close()
         {
-            view.AppendInfo($"<=== start close");
+            view.AppendInfo($"Hint {TimeUtil.GetCurrentDateTime()} \n Start Close Socket");
             mClient?.CloseAsync();
         }
 
-        private DispatcherTimer pingTimer;
+        private Timer pingTimer;
         public void StartPing()
         {
             if (!mIsAlive)
@@ -139,30 +141,26 @@ namespace WebSocketTool.Client
                 view.AppendInfo("start ping failure: ws is not connected");
                 return;
             }
-            if (pingTimer?.IsEnabled ?? false)
-            {
-                pingTimer.Stop();
-            }
-            pingTimer = new DispatcherTimer();
-            pingTimer.Interval = TimeSpan.FromMilliseconds(PingTime);
-            pingTimer.Tick += (sender, args) =>
+
+            pingTimer = new Timer {Interval = PingTime, AutoReset = false};
+            pingTimer.Elapsed += (s, e) =>
             {
                 Ping();
             };
             pingTimer.Start();
-            view.AppendInfo($"<===StartPing, time:{PingTime}");
+            view.AppendInfo($"You {TimeUtil.GetCurrentDateTime()} \n StartPing, TimeSpan:{PingTime}");
         }
 
         private void Ping(string msg = null)
         {
-            view.AppendInfo($"<=== ping:{msg}");
             mClient.Ping(msg);
+            App.RunOnUIThread(() => view.AppendInfo($"You {TimeUtil.GetCurrentDateTime()} \n Send Ping:{msg}"));
         }
 
         public void StopPing()
         {
-            view.AppendInfo("<===StopPing");
-            if (pingTimer?.IsEnabled ?? false)
+            view.AppendInfo($"You {TimeUtil.GetCurrentDateTime()} \n StopPing");
+            if (pingTimer != null)
             {
                 pingTimer.Stop();
                 pingTimer = null;
@@ -171,7 +169,7 @@ namespace WebSocketTool.Client
 
         private void InitSocketClient()
         {
-            view.AppendInfo("InitSocketClient");
+            view.AppendInfo($"Hint {TimeUtil.GetCurrentDateTime()} \n InitSocketClient");
             mClient = new SocketClient(WsUrl);
             mClient.OpenEvent += ClientOnOpenEvent;
             mClient.CloseEvent += ClientOnCloseEvent;
@@ -183,7 +181,7 @@ namespace WebSocketTool.Client
         {
             App.RunOnUIThread(() =>
             {
-                view.AppendInfo($"===> receive message: {e.Data}");
+                view.AppendInfo($"Server {TimeUtil.GetCurrentDateTime()} \n {e.Data}");
             });
         }
 
@@ -191,7 +189,7 @@ namespace WebSocketTool.Client
         {
             App.RunOnUIThread(() =>
             {
-                view.AppendInfo($"===> socket error: {e.Message}");
+                view.AppendInfo($"Server {TimeUtil.GetCurrentDateTime()} \n Socket Error: {e.Message}");
                 SetState(false);
             });
             StopPing();
@@ -222,7 +220,7 @@ namespace WebSocketTool.Client
         {
             App.RunOnUIThread(() =>
             {
-                view.AppendInfo($"===> socket closed:{e.Code}:{e.Reason}");
+                view.AppendInfo($"Server {TimeUtil.GetCurrentDateTime()} \n Socket Closed:{e.Code}:{e.Reason}");
                 SetState(false);
             });
             StopPing();
@@ -232,7 +230,7 @@ namespace WebSocketTool.Client
         {
             App.RunOnUIThread(() =>
             {
-                view.AppendInfo($"<=== socket connected");
+                view.AppendInfo($"Server {TimeUtil.GetCurrentDateTime()} \n Socket Connected");
                 SetState(true);
             });
         }
