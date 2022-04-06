@@ -22,10 +22,15 @@ namespace WebSocketTool
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
-            LogManager.GetManager().Init("WebSocketTool");
-            XmlConfigurator.ConfigureAndWatch(new FileInfo("log4net.config"));
+            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             Directory.CreateDirectory("log");
+            LogManager.GetManager().Init("WebSocketTool");
             log = LogManager.GetManager().GetLog(nameof(App));
+        }
+
+        private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            log.Error($"app crash:{e.ExceptionObject}");
         }
 
         public static void RunOnUIThread(Action action)

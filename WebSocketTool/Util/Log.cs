@@ -104,7 +104,7 @@ namespace WebSocketTool.Util
             log.Warn(msg);
         }
 
-        public void Error(string msg, Exception e)
+        public void Error(string msg, Exception e = null)
         {
             log.Error(msg, e);
         }
