@@ -22,7 +22,7 @@ namespace WebSocketTool.Client
             mSocket = new WebSocket(url);
             if (url.StartsWith("wss"))
             {
-                mSocket.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12;
+                mSocket.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls;
             }
             mSocket.OnOpen += OnOpen;
             mSocket.OnClose += OnClose;
