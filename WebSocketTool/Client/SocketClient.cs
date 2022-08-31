@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net.Security;
 using System.Security.Authentication;
 using System.Text;
 using log4net;
@@ -14,7 +15,7 @@ namespace WebSocketTool.Client
         public event EventHandler<MessageEventArgs> MessageEvent;
         public event EventHandler<ErrorEventArgs> ErrorEvent;
         public event EventHandler<EventArgs> OpenEvent;
-        public event EventHandler<CloseEventArgs> CloseEvent; 
+        public event EventHandler<CloseEventArgs> CloseEvent;
 
         public SocketClient(string url)
         {
@@ -22,7 +23,7 @@ namespace WebSocketTool.Client
             mSocket = new WebSocket(url);
             if (url.StartsWith("wss"))
             {
-                mSocket.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls;
+                mSocket.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12;
             }
             mSocket.OnOpen += OnOpen;
             mSocket.OnClose += OnClose;
@@ -30,6 +31,35 @@ namespace WebSocketTool.Client
             mSocket.OnMessage += OnMessage;
         }
 
+        #region Config
+
+        public SocketClient SetServerCertificateValidationCallback(RemoteCertificateValidationCallback callback)
+        {
+            Log.Info("SetServerCertificateValidationCallback");
+            mSocket.SslConfiguration.ServerCertificateValidationCallback += callback;
+            return this;
+        }
+
+        public SocketClient SetEnableSslProtocols(SslProtocols protocols)
+        {
+            Log.Info($"SetEnableSslProtocols:{protocols}");
+            mSocket.SslConfiguration.EnabledSslProtocols = protocols;
+            return this;
+        }
+
+        public SocketClient SetHttpProxy(string address, string userName, string password)
+        {
+            Log.Info($"SetHttpProxy, address:{address}, userName:{userName}, password:{password}");
+            if (address.StartsWith("http://"))
+            {
+                mSocket.SetProxy(address, userName, password);
+            }
+            return this;
+        }
+
+        #endregion
+
+        #region Event Handler
         private void OnMessage(object sender, MessageEventArgs e)
         {
             Log.Info($"OnMessage, isPing:{e.IsPing}, isText:{e.IsText}, isBinary:{e.IsBinary}, data:{e.Data}, rawData:{e.RawData.Length}");
@@ -53,7 +83,40 @@ namespace WebSocketTool.Client
             Log.Info("OnOpen");
             OpenEvent?.Invoke(this, e);
         }
+        #endregion
 
+        #region State
+        public bool IsAlive()
+        {
+            Log.Info($"IsAlive:{mSocket?.IsAlive ?? false}");
+            return mSocket?.IsAlive ?? false;
+        }
+        #endregion
+        
+        #region Operate
+        public void Connect()
+        {
+            Log.Info("Connect");
+            mSocket.Connect();
+        }
+
+        public void ConnectAsync()
+        {
+            Log.Info("ConnectAsync");
+            mSocket.ConnectAsync();
+        }
+        
+        public void Send(string content)
+        {
+            Log.Info($"send:{content}");
+            if (content == null)
+            {
+                Log.Error("content is null!");
+                return;
+            }
+            mSocket.Send(content);
+        }
+        
         public void Ping(string msg = null)
         {
             Log.Info($"ping:{msg}");
@@ -67,35 +130,6 @@ namespace WebSocketTool.Client
             }
         }
 
-        public void Send(string content)
-        {
-            Log.Info($"send:{content}");
-            if (content == null)
-            {
-                Log.Error("content is null!");
-                return;
-            }
-            mSocket.Send(content);
-        }
-
-        public bool IsAlive()
-        {
-            Log.Info($"IsAlive:{mSocket?.IsAlive ?? false}");
-            return mSocket?.IsAlive ?? false;
-        }
-
-        public void Connect()
-        {
-            Log.Info("Connect");
-            mSocket.Connect();
-        }
-
-        public void ConnectAsync()
-        {
-            Log.Info("ConnectAsync");
-            mSocket.ConnectAsync();
-        }
-
         public void Close()
         {
             Log.Info("Close");
@@ -107,5 +141,6 @@ namespace WebSocketTool.Client
             Log.Info("CloseAsync");
             mSocket.CloseAsync();
         }
+        #endregion
     }
 }
