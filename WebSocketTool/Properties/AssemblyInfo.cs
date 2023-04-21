@@ -12,7 +12,7 @@ using System.Windows;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("DevWiki")]
 [assembly: AssemblyProduct("WebSocketTool")]
-[assembly: AssemblyCopyright("Copyright DevWiki ©  2022")]
+[assembly: AssemblyCopyright("Copyright DevWiki ©  2023")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
