@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
 using System.Timers;
 using log4net;
 using WebSocketSharp;
@@ -222,7 +223,7 @@ namespace WebSocketTool.Client
 
         public void StopPing()
         {
-            view.AppendInfo($"You {TimeUtil.GetCurrentDateTime()} \n StopPing");
+            App.RunOnUIThread(() => view.AppendInfo($"You {TimeUtil.GetCurrentDateTime()} \n StopPing"));
             if (pingTimer != null)
             {
                 pingTimer.Stop();
@@ -234,23 +235,10 @@ namespace WebSocketTool.Client
         {
             view.AppendInfo($"Hint {TimeUtil.GetCurrentDateTime()} \n InitSocketClient");
             mClient = new SocketClient(WsUrl);
-            mClient.SetServerCertificateValidationCallback((sender, certificate, chain, errors) =>
+            if (WsUrl.StartsWith("wss:"))
             {
-                App.RunOnUIThread(() => { view.AppendInfo($"ServerCertificateError:{errors}"); });
-                Log.Info($"error:{errors}");
-                Log.Info($"Issuer: {certificate.Issuer},Subject:{certificate.Subject}");
-                Log.Info("ChainStatus:");
-                foreach (var status in chain.ChainStatus)
-                {
-                    Log.Info($"{status.StatusInformation}: {status}");
-                }
-                Log.Info("ChainElements:");
-                foreach (var element in chain.ChainElements)
-                {
-                    Log.Info($"element: {element.Certificate},{element.Information}");
-                }
-                return errors == SslPolicyErrors.None;
-            });
+                mClient.SetServerCertificateValidationCallback(CertificateValidationCallback);
+            }
             mClient.OpenEvent += ClientOnOpenEvent;
             mClient.CloseEvent += ClientOnCloseEvent;
             mClient.ErrorEvent += ClientOnErrorEvent;
@@ -260,6 +248,26 @@ namespace WebSocketTool.Client
                 mClient.SetHttpProxy(ProxyAddress, ProxyUserName, ProxyPassword);
             }
             
+        }
+
+        private bool CertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors errors)
+        {
+            App.RunOnUIThread(() => { view.AppendInfo($"ServerCertificateError:{errors}"); });
+            Log.Info($"error:{errors}");
+            Log.Info($"Issuer: {certificate.Issuer},Subject:{certificate.Subject}");
+            Log.Info("ChainStatus:");
+            foreach (var status in chain.ChainStatus)
+            {
+                Log.Info($"{status.StatusInformation}: {status}");
+            }
+
+            Log.Info("ChainElements:");
+            foreach (var element in chain.ChainElements)
+            {
+                Log.Info($"element: {element.Certificate},{element.Information}");
+            }
+
+            return errors == SslPolicyErrors.None;
         }
 
         private void ClientOnMessageEvent(object sender, MessageEventArgs e)

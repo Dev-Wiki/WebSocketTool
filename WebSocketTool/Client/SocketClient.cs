@@ -16,10 +16,12 @@ namespace WebSocketTool.Client
         public event EventHandler<ErrorEventArgs> ErrorEvent;
         public event EventHandler<EventArgs> OpenEvent;
         public event EventHandler<CloseEventArgs> CloseEvent;
+        public string Url { get; private set; }
 
         public SocketClient(string url)
         {
             Log.Info($"create socket:{url}");
+            Url = url;
             mSocket = new WebSocket(url);
             if (url.StartsWith("wss"))
             {
