@@ -75,11 +75,18 @@ namespace WebSocketTool.Client
         {
             viewModel.Close();
         }
+
+        public Window GetWindow()
+        {
+            return this;
+        }
     }
 
     public interface IClientView
     {
         void ShowToast(string msg);
         void AppendInfo(string info);
+
+        Window GetWindow();
     }
 }

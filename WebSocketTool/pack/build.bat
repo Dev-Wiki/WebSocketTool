@@ -1,4 +1,4 @@
-set version=1.0.0
+set version=1.0.3
 
 if not "%~1"=="" (
     set version=%1

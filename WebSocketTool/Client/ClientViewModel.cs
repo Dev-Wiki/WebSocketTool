@@ -6,6 +6,7 @@ using log4net;
 using WebSocketSharp;
 using WebSocketTool.Base;
 using WebSocketTool.Util;
+using WebSocketTool.View.Dialog;
 using LogManager = log4net.LogManager;
 
 namespace WebSocketTool.Client
@@ -106,7 +107,7 @@ namespace WebSocketTool.Client
 
         public void Connect()
         {
-            if (string.IsNullOrEmpty(WsUrl))
+            if (string.IsNullOrEmpty(WsUrl) || (!WsUrl.StartsWith("wss://") && !WsUrl.StartsWith("ws://")))
             {
                 view.AppendInfo($"Hint {TimeUtil.GetCurrentDateTime()} \n 请输入正确的WebSocket地址");
                 return;
@@ -126,8 +127,16 @@ namespace WebSocketTool.Client
             view.AppendInfo($"Hint {TimeUtil.GetCurrentDateTime()} \n Start Connect Socket");
             if (IsProxyChecked)
             {
-                view.AppendInfo($"use proxy: {ProxyAddress}");
-                mClient.SetHttpProxy(ProxyAddress, ProxyUserName, ProxyPassword);
+                if (!string.IsNullOrEmpty(ProxyAddress))
+                {
+                    view.AppendInfo($"Hint use proxy: {ProxyAddress}");
+                    mClient.SetHttpProxy(ProxyAddress, ProxyUserName, ProxyPassword);
+                }
+                else
+                {
+                    view.ShowToast("请输入代理地址!");
+                    view.AppendInfo($"use proxy address is empty!");
+                }
             }
             mClient.ConnectAsync();
         }
