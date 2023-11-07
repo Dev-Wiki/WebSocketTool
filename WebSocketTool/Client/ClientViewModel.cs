@@ -22,6 +22,7 @@ namespace WebSocketTool.Client
             this.view = view;
         }
 
+        #region data bingding 
         private string mWsUrl;
         public string WsUrl
         {
@@ -44,7 +45,7 @@ namespace WebSocketTool.Client
             }
         }
 
-        private long mPingTime = 1000;
+        private long mPingTime = 2000;
         public long PingTime
         {
             get => mPingTime;
@@ -103,50 +104,6 @@ namespace WebSocketTool.Client
             }
         }
 
-        #endregion
-
-        public void Connect()
-        {
-            if (string.IsNullOrEmpty(WsUrl) || (!WsUrl.StartsWith("wss://") && !WsUrl.StartsWith("ws://")))
-            {
-                view.AppendInfo($"Hint {TimeUtil.GetCurrentDateTime()} \n 请输入正确的WebSocket地址");
-                return;
-            }
-
-            if (mClient == null)
-            {
-                InitSocketClient();
-            }
-
-            if (mClient.IsAlive())
-            {
-                view.AppendInfo($"Hint {TimeUtil.GetCurrentDateTime()} \n WebSocket已连接,请先断开上次连接");
-                return;
-            }
-
-            view.AppendInfo($"Hint {TimeUtil.GetCurrentDateTime()} \n Start Connect Socket");
-            if (IsProxyChecked)
-            {
-                if (!string.IsNullOrEmpty(ProxyAddress))
-                {
-                    view.AppendInfo($"Hint use proxy: {ProxyAddress}");
-                    mClient.SetHttpProxy(ProxyAddress, ProxyUserName, ProxyPassword);
-                }
-                else
-                {
-                    view.ShowToast("请输入代理地址!");
-                    view.AppendInfo($"use proxy address is empty!");
-                }
-            }
-            mClient.ConnectAsync();
-        }
-
-        public void Send()
-        {
-            view.AppendInfo($"You {TimeUtil.GetCurrentDateTime()} \n {SendContent}");
-            mClient.Send(SendContent);
-        }
-
         private bool mIsAlive = false;
 
         private bool mIsConnectEnable = true;
@@ -192,11 +149,83 @@ namespace WebSocketTool.Client
                 RaisePropertyChanged(nameof(IsPingEnable));
             }
         }
+        #endregion
+        
+        #endregion
+
+        private string FormatInfo(string info, int type = 0)
+        {
+            var tag = "【Hint】";
+            switch (type)
+            {
+                case 1:
+                    tag = "【Client】==>【Server】";
+                    break;
+                case 2:
+                    tag = "【Client】<==【Server】";
+                    break;
+            }
+            return $"{tag} {TimeUtil.GetCurrentDateTime()} \n {info}";
+        }
+
+        public void Connect()
+        {
+            if (string.IsNullOrEmpty(WsUrl) || (!WsUrl.StartsWith("wss://") && !WsUrl.StartsWith("ws://")))
+            {
+                view.AppendInfo(FormatInfo("请输入正确的WebSocket地址"));
+                return;
+            }
+
+            if (mClient == null)
+            {
+                InitSocketClient();
+            }
+            
+            if (IsProxyChecked)
+            {
+                if (!string.IsNullOrEmpty(ProxyAddress))
+                {
+                    view.AppendInfo(FormatInfo($"设置代理地址：{ProxyAddress}"));
+                }
+                mClient?.SetHttpProxy(ProxyAddress, ProxyUserName, ProxyPassword);
+            }
+
+            if (mClient != null && mClient.IsAlive())
+            {
+                view.AppendInfo(FormatInfo("WebSocket已连接,请先断开"));
+                return;
+            }
+
+            if (IsProxyChecked)
+            {
+                if (!string.IsNullOrEmpty(ProxyAddress))
+                {
+                    view.AppendInfo(FormatInfo($"使用代理服务器: {ProxyAddress}"));
+                    mClient?.SetHttpProxy(ProxyAddress, ProxyUserName, ProxyPassword);
+                }
+                else
+                {
+                    view.ShowToast("代理地址为空，请输入代理地址!");
+                    view.AppendInfo(FormatInfo("代理地址为空，请输入正确的代理地址！"));
+                }
+            }
+            view.AppendInfo(FormatInfo($"开始连接Socket:{mWsUrl}"));
+            mClient.ConnectAsync();
+        }
+
+        public void Send()
+        {
+            view.AppendInfo(FormatInfo(SendContent, 1));
+            mClient.Send(SendContent);
+        }
 
         public void Close()
         {
-            view.AppendInfo($"Hint {TimeUtil.GetCurrentDateTime()} \n Start Close Socket");
-            mClient?.CloseAsync();
+            view.AppendInfo(FormatInfo("关闭Socket"));
+            if (mClient != null)
+            {
+                mClient.Close();
+            }
         }
 
         private Timer pingTimer;
@@ -204,13 +233,13 @@ namespace WebSocketTool.Client
         {
             if (!mIsAlive)
             {
-                view.AppendInfo("start ping failure: ws is not connected");
+                view.AppendInfo(FormatInfo("启动 ping 失败: ws 未链接成功！"));
                 return;
             }
 
-            if (PingTime <= 0)
+            if (PingTime < 500)
             {
-                view.AppendInfo("ping time interval must > 0");
+                view.AppendInfo(FormatInfo("ping间隔时间必须大于500ms"));
                 return;
             }
 
@@ -221,32 +250,32 @@ namespace WebSocketTool.Client
                 Ping();
             };
             pingTimer.Start();
-            view.AppendInfo($"You {TimeUtil.GetCurrentDateTime()} \n StartPing, TimeSpan:{PingTime}");
+            view.AppendInfo(FormatInfo($"启动ping，时间间隔：{PingTime}"));
         }
 
         private void Ping(string msg = null)
         {
             mClient.Ping(msg);
-            App.RunOnUIThread(() => view.AppendInfo($"You {TimeUtil.GetCurrentDateTime()} \n Send Ping:{msg}"));
+            App.RunOnUIThread(() => view.AppendInfo(FormatInfo("发送ping", 1)));
         }
 
         public void StopPing()
         {
-            App.RunOnUIThread(() => view.AppendInfo($"You {TimeUtil.GetCurrentDateTime()} \n StopPing"));
+            App.RunOnUIThread(() => view.AppendInfo(FormatInfo("停止ping")));
             if (pingTimer != null)
             {
                 pingTimer.Stop();
                 pingTimer = null;
             }
         }
-
+        
         private void InitSocketClient()
         {
-            view.AppendInfo($"Hint {TimeUtil.GetCurrentDateTime()} \n InitSocketClient");
+            view.AppendInfo(FormatInfo("初始化Socket客户端"));
             mClient = new SocketClient(WsUrl);
             if (WsUrl.StartsWith("wss:"))
             {
-                mClient.SetServerCertificateValidationCallback(CertificateValidationCallback);
+                mClient.AddServerCertificateValidationCallback(CertificateValidationCallback);
             }
             mClient.OpenEvent += ClientOnOpenEvent;
             mClient.CloseEvent += ClientOnCloseEvent;
@@ -259,9 +288,25 @@ namespace WebSocketTool.Client
             
         }
 
+        private void UninitSocketClient()
+        {
+            if (mClient != null)
+            {
+                if (WsUrl.StartsWith("wss:"))
+                {
+                    mClient.RemoveServerCertificateValidationCallback(CertificateValidationCallback);
+                }
+                mClient.OpenEvent -= ClientOnOpenEvent;
+                mClient.CloseEvent -= ClientOnCloseEvent;
+                mClient.ErrorEvent -= ClientOnErrorEvent;
+                mClient.MessageEvent -= ClientOnMessageEvent;
+                mClient = null;
+            }
+        }
+
         private bool CertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors errors)
         {
-            App.RunOnUIThread(() => { view.AppendInfo($"ServerCertificateError:{errors}"); });
+            App.RunOnUIThread(() => { view.AppendInfo(FormatInfo($"ServerCertificateError:{errors}", 2)); });
             Log.Info($"error:{errors}");
             Log.Info($"Issuer: {certificate.Issuer},Subject:{certificate.Subject}");
             Log.Info("ChainStatus:");
@@ -281,17 +326,14 @@ namespace WebSocketTool.Client
 
         private void ClientOnMessageEvent(object sender, MessageEventArgs e)
         {
-            App.RunOnUIThread(() =>
-            {
-                view.AppendInfo($"Server {TimeUtil.GetCurrentDateTime()} \n {e.Data}");
-            });
+            App.RunOnUIThread(() => view.AppendInfo(FormatInfo(e.Data, 2)));
         }
 
         private void ClientOnErrorEvent(object sender, ErrorEventArgs e)
         {
             App.RunOnUIThread(() =>
             {
-                view.AppendInfo($"Server {TimeUtil.GetCurrentDateTime()} \n Socket Error: {e.Message}");
+                view.AppendInfo(FormatInfo($"Socket Error: {e.Message}", 2));
                 SetState(false);
             });
             StopPing();
@@ -322,8 +364,9 @@ namespace WebSocketTool.Client
         {
             App.RunOnUIThread(() =>
             {
-                view.AppendInfo($"Server {TimeUtil.GetCurrentDateTime()} \n Socket Closed:{e.Code}:{e.Reason}");
+                view.AppendInfo(FormatInfo($"Socket Closed:{e.Code}:{e.Reason}", 2));
                 SetState(false);
+                UninitSocketClient();
             });
             StopPing();
         }
@@ -332,7 +375,7 @@ namespace WebSocketTool.Client
         {
             App.RunOnUIThread(() =>
             {
-                view.AppendInfo($"Server {TimeUtil.GetCurrentDateTime()} \n Socket Connected");
+                view.AppendInfo(FormatInfo("Socket Connected", 2));
                 SetState(true);
             });
         }

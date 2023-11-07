@@ -27,6 +27,8 @@ namespace WebSocketTool
         public MainWindow()
         {
             InitializeComponent();
+            ClientBtn_OnClick(null, null);
+            Close();
         }
 
         private void ClientBtn_OnClick(object sender, RoutedEventArgs e)

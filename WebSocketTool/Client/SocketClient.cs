@@ -35,10 +35,17 @@ namespace WebSocketTool.Client
 
         #region Config
 
-        public SocketClient SetServerCertificateValidationCallback(RemoteCertificateValidationCallback callback)
+        public SocketClient AddServerCertificateValidationCallback(RemoteCertificateValidationCallback callback)
         {
             Log.Info("SetServerCertificateValidationCallback");
             mSocket.SslConfiguration.ServerCertificateValidationCallback += callback;
+            return this;
+        }
+
+        public SocketClient RemoveServerCertificateValidationCallback(RemoteCertificateValidationCallback callback)
+        {
+            Log.Info("RemoveServerCertificateValidationCallback");
+            mSocket.SslConfiguration.ServerCertificateValidationCallback -= callback;
             return this;
         }
 
